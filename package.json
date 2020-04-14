@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/app.js",
+    "test": "node src/test.js",
     "dev": "nodemon src/app.js -e js,hbs"
   },
   "keywords": [],
