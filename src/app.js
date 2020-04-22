@@ -6,7 +6,7 @@ const hbs = require('hbs')
 
 const app = express()
 
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 8080
 
 //Define paths for Express config
 const publicDirectoryPath = path.join(__dirname, '../public')
@@ -24,14 +24,14 @@ app.use(express.static(publicDirectoryPath))
 app.get('', (req, res) => {
     res.render('index', {
         title: 'Weather App',
-        name: 'Vikas'
+        name: 'VN'
     })
 })
 
 app.get('/about', (req, res) => {
     res.render('about', {
         title: "About Me",
-        name: "Vikas Neekhra"
+        name: "VN"
     })
 })
 
@@ -39,7 +39,7 @@ app.get('/help', (req, res) => {
     res.render('help', {
         helpText: 'Help pages...',
         title: 'Help',
-        name: 'Vikas'
+        name: 'VN'
     })
 })
 
