@@ -12,9 +12,10 @@ openshift.withCluster() {
 }
 
 pipeline {
-  agent {
-    docker { image 'node:alpine' }
-  }
+  agent any
+
+  tools {nodejs "nodejs"}
+
   stages {
     stage('preamble') {
         steps {
