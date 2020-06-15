@@ -1,33 +1,108 @@
-node {
-    def app
+// Jenkinsfile for NodeJS App - CI/CD
+def templateName = 'weather-nodejs'
 
-    stage('Clone repository') {
-        /* Cloning the Repository to our Workspace */
+openshift.withCluster() {
+  env.NAMESPACE = openshift.project()
+  env.APP_NAME = "${JOB_NAME}".replaceAll(/-build.*/, '')
+  echo "Starting Pipeline for ${APP_NAME}..."
+  env.BUILD = "${env.NAMESPACE}"
+  env.DEV = "${APP_NAME}-dev"
+  env.STAGE = "${APP_NAME}-stage"
+  env.PROD = "${APP_NAME}-prod"
+}
 
-        checkout scm
-    }
-
-    stage('Build image') {
-        /* This builds the actual image */
-
-        app = docker.build("vneekhra/img_docker_weatherapp_jenkins")
-    }
-
-    stage('Test image') {
-        
-        app.inside {
-            echo "Tests passed"
+pipeline {
+  agent {
+    docker { image 'node:alpine' }
+  }
+  stages {
+    stage('preamble') {
+        steps {
+            script {
+                openshift.withCluster() {
+                    openshift.withProject() {
+                        echo "Using project: ${openshift.project()}"
+                        echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
+                    }
+                }
+            }
         }
     }
-
-    stage('Push image') {
-        /* 
-			You would need to first register with DockerHub before you can push images to your account
-		*/
-        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub') {
-            app.push("${env.BUILD_NUMBER}")
-            app.push("latest")
-            } 
-                echo "Trying to Push Docker Build to DockerHub"
+    // Build Application using npm
+    stage('Building application') {
+      steps {
+        sh "npm install"
+      }
     }
+      
+    // Run NPM unit tests
+    stage('Unit Testing application'){
+      steps {
+        sh "npm run test"
+      }
+    }
+      
+    // Build Container Image using the artifacts produced in previous stages
+    stage('Build NodeJS App Image'){
+      steps {
+        script {
+          // Build container image using local Openshift cluster
+          openshift.withCluster() {
+            openshift.withProject() {
+              timeout (time: 10, unit: 'MINUTES') {
+                // run the build and wait for completion
+                def build = openshift.selector("bc", "${params.APPLICATION_NAME}").startBuild("--from-dir=.")
+                                    
+                // print the build logs
+                build.logs('-f')
+              }
+            }        
+          }
+        }
+      }
+    } 
+    stage('Promote to Dev') {
+      steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject() {
+              openshift.tag("${env.BUILD}/${env.APP_NAME}:latest", "${env.DEV}/${env.APP_NAME}:latest")
+            }
+          }
+        }
+      }
+    }
+
+    stage('Promote to Stage') {
+      steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject() {
+              openshift.tag("${env.DEV}/${env.APP_NAME}:latest", "${env.STAGE}/${env.APP_NAME}:latest")
+            }
+          }
+        }
+      }
+    }
+
+    stage('Promotion gate') {
+      steps {
+        script {
+          input message: 'Promote application to Production?'
+        }
+      }
+    }
+
+    stage('Promote to Prod') {
+      steps {
+        script {
+          openshift.withCluster() {
+            openshift.withProject() {
+              openshift.tag("${env.STAGE}/${env.APP_NAME}:latest", "${env.PROD}/${env.APP_NAME}:latest")
+            }
+          }
+        }
+      }
+    }
+  }
 }
