@@ -67,6 +67,8 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject() {
+              echo "In DEV stage from== ${env.BUILD}/${env.APP_NAME}:latest"
+              echo "In DEV stage to== ${env.DEV}/${env.APP_NAME}:latest"
               openshift.tag("${env.BUILD}/${env.APP_NAME}:latest", "${env.DEV}/${env.APP_NAME}:latest")
             }
           }
