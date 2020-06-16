@@ -3,12 +3,16 @@ def templateName = 'weather-nodejs'
 
 openshift.withCluster() {
   env.NAMESPACE = openshift.project()
+  echo "Starting Pipeline env.NAMESPACE= ${env.NAMESPACE}..."
+  echo "Starting Pipeline JOB_NAME= ${JOB_NAME}..."
   env.APP_NAME = "${JOB_NAME}".replaceAll(/-build.*/, '')
-  echo "Starting Pipeline for ${APP_NAME}..."
+  echo "Starting Pipeline env.APP_NAME= ${env.APP_NAME}"
+  echo "Starting Pipeline APP_NAME= ${APP_NAME}"
   env.BUILD = "${env.NAMESPACE}"
   env.DEV = "${APP_NAME}-dev"
   env.STAGE = "${APP_NAME}-stage"
   env.PROD = "${APP_NAME}-prod"
+  echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
 }
 
 pipeline {
@@ -67,9 +71,9 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              echo "In DEV stage from== ${env.BUILD}/${env.APP_NAME}:latest"
-              echo "In DEV stage to== ${env.DEV}/${env.APP_NAME}:latest"
-              openshift.tag("${env.BUILD}/${env.APP_NAME}:latest", "${env.DEV}/${env.APP_NAME}:latest")
+              echo "In DEV stage from== ${env.BUILD}/${params.APPLICATION_NAME}:latest"
+              echo "In DEV stage to== ${env.DEV}/${params.APPLICATION_NAME}:latest"
+              openshift.tag("${env.BUILD}/${params.APPLICATION_NAME}:latest", "${env.DEV}/${params.APPLICATION_NAME}:latest")
             }
           }
         }
@@ -81,7 +85,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              openshift.tag("${env.DEV}/${env.APP_NAME}:latest", "${env.STAGE}/${env.APP_NAME}:latest")
+              openshift.tag("${env.DEV}/${params.APPLICATION_NAME}:latest", "${env.STAGE}/${params.APPLICATION_NAME}:latest")
             }
           }
         }
@@ -101,7 +105,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              openshift.tag("${env.STAGE}/${env.APP_NAME}:latest", "${env.PROD}/${env.APP_NAME}:latest")
+              openshift.tag("${env.STAGE}/${params.APPLICATION_NAME}:latest", "${env.PROD}/${params.APPLICATION_NAME}:latest")
             }
           }
         }
