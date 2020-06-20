@@ -13,6 +13,8 @@ openshift.withCluster() {
   env.STAGE = "${APP_NAME}-stage"
   env.PROD = "${APP_NAME}-prod"
   echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
+  echo "BLUE_GREEN: ${params.BLUE_GREEN}"
+  echo "THIS WILL BE DEPLOYED IN PRODUCTION ${params.BLUE_GREEN} ENVIRONMENT"
 }
 
 pipeline {
@@ -95,17 +97,17 @@ pipeline {
     stage('Promotion gate') {
       steps {
         script {
-          input message: 'Promote application to Production?'
+          input message: "Promote application to Production ${params.BLUE_GREEN} environment!"
         }
       }
     }
 
-    stage('Promote to Prod') {
+    stage("Promote to Prod "${params.BLUE_GREEN}) {
       steps {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              openshift.tag("${env.STAGE}/${params.APPLICATION_NAME}:latest", "${env.PROD}/${params.APPLICATION_NAME}:latest")
+              openshift.tag("${env.STAGE}/${params.APPLICATION_NAME}:latest", "${env.PROD}/${params.APPLICATION_NAME}-${params.BLUE_GREEN}:latest")
             }
           }
         }
