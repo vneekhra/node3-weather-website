@@ -102,7 +102,7 @@ pipeline {
       }
     }
 
-    stage("Promote to Prod ${params.BLUE_GREEN}") {
+    stage('Promote to Prod') {
       steps {
         script {
           openshift.withCluster() {
