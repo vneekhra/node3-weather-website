@@ -1,5 +1,6 @@
 // Jenkinsfile for NodeJS App - CI/CD
 def templateName = 'weather-nodejs'
+def myEnvDeploy = 'dev'
 
 openshift.withCluster() {
   env.NAMESPACE = openshift.project()
@@ -15,6 +16,7 @@ openshift.withCluster() {
   echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
   echo "BLUE_GREEN: ${params.BLUE_GREEN}"
   echo "THIS WILL BE DEPLOYED IN PRODUCTION ${params.BLUE_GREEN} ENVIRONMENT"
+  echo "myEnvDeploy: ${myEnvDeploy}"
 }
 
 pipeline {
@@ -30,6 +32,15 @@ pipeline {
                     openshift.withProject() {
                         echo "Using project: ${openshift.project()}"
                         echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
+                        myEnvDeploy = input(
+                          message: 'Where to deploy?', 
+                          parameters: [
+                            [$class: 'ChoiceParameterDefinition', 
+                            choices: 'dev\nstage\nprod\nall', 
+                            name: 'input', 
+                            description: 'Select the environment where you want to deploy the application.']
+                          ])
+                        echo "Deploy in ${myEnvDeploy}"
                     }
                 }
             }
@@ -57,6 +68,7 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               timeout (time: 10, unit: 'MINUTES') {
+                echo "Deploy in ${myEnvDeploy}"
                 // run the build and wait for completion
                 def build = openshift.selector("bc", "${params.APPLICATION_NAME}").startBuild("--from-dir=.")
                                     
@@ -69,6 +81,11 @@ pipeline {
       }
     } 
     stage('Promote to Dev') {
+      when {
+        expression {
+          ${myEnvDeploy} == 'dev' || ${myEnvDeploy} == 'all'
+        }
+      }
       steps {
         script {
           openshift.withCluster() {
@@ -83,6 +100,11 @@ pipeline {
     }
 
     stage('Promote to Stage') {
+      when {
+        expression {
+          ${myEnvDeploy} == 'stage' || ${myEnvDeploy} == 'all'
+        }
+      }
       steps {
         script {
           openshift.withCluster() {
@@ -95,6 +117,11 @@ pipeline {
     }
 
     stage('Promotion gate') {
+      when {
+        expression {
+          ${myEnvDeploy} == 'prod' || ${myEnvDeploy} == 'all'
+        }
+      }
       steps {
         script {
           input message: "Promote application to Production ${params.BLUE_GREEN} environment!"
@@ -103,6 +130,11 @@ pipeline {
     }
 
     stage('Promote to Prod') {
+      when {
+        expression {
+          ${myEnvDeploy} == 'prod' || ${myEnvDeploy} == 'all'
+        }
+      }
       steps {
         script {
           openshift.withCluster() {
