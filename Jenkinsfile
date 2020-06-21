@@ -36,11 +36,11 @@ pipeline {
                           message: 'Where to deploy?', 
                           parameters: [
                             [$class: 'ChoiceParameterDefinition', 
-                            choices: 'dev\nstage\nprod\nall', 
+                            choices: 'dev\nstage\nprod', 
                             name: 'input', 
                             description: 'Select the environment where you want to deploy the application.']
                           ])
-                        echo "Deploy in ${DEPLOY_TO}"
+                        echo "Deploy till ${DEPLOY_TO} environment!!!"
                     }
                 }
             }
@@ -68,7 +68,7 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               timeout (time: 10, unit: 'MINUTES') {
-                echo "Deploy in ${DEPLOY_TO}"
+                echo "Deploy till ${DEPLOY_TO}"
                 // run the build and wait for completion
                 def build = openshift.selector("bc", "${params.APPLICATION_NAME}").startBuild("--from-dir=.")
                                     
@@ -81,18 +81,17 @@ pipeline {
       }
     } 
     stage('Promote to Dev') {
-      when {
-        expression {
-          DEPLOY_TO == 'dev' || DEPLOY_TO == 'all'
-        }
-      }
       steps {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              echo "In DEV stage from== ${env.BUILD}/${params.APPLICATION_NAME}:latest"
-              echo "In DEV stage to== ${env.DEV}/${params.APPLICATION_NAME}:latest"
-              openshift.tag("${env.BUILD}/${params.APPLICATION_NAME}:latest", "${env.DEV}/${params.APPLICATION_NAME}:latest")
+              if (${DEPLOY_TO} == 'dev' || ${DEPLOY_TO} == 'stage' || ${DEPLOY_TO} == 'prod') {
+                echo "In DEV stage from== ${env.BUILD}/${params.APPLICATION_NAME}:latest"
+                echo "In DEV stage to== ${env.DEV}/${params.APPLICATION_NAME}:latest"
+                openshift.tag("${env.BUILD}/${params.APPLICATION_NAME}:latest", "${env.DEV}/${params.APPLICATION_NAME}:latest")
+              } else {
+                echo "Skipping DEV environment deployment due to conditions!"
+              }
             }
           }
         }
@@ -100,16 +99,15 @@ pipeline {
     }
 
     stage('Promote to Stage') {
-      when {
-        expression {
-          DEPLOY_TO == 'dev' || DEPLOY_TO == 'stage' || DEPLOY_TO == 'all'
-        }
-      }
       steps {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              openshift.tag("${env.DEV}/${params.APPLICATION_NAME}:latest", "${env.STAGE}/${params.APPLICATION_NAME}:latest")
+              if (${DEPLOY_TO} == 'stage' || ${DEPLOY_TO} == 'prod') {
+                openshift.tag("${env.DEV}/${params.APPLICATION_NAME}:latest", "${env.STAGE}/${params.APPLICATION_NAME}:latest")
+              } else {
+                echo "Skipping STAGE environment deployment due to conditions!"
+              }
             }
           }
         }
@@ -117,29 +115,25 @@ pipeline {
     }
 
     stage('Promotion gate') {
-      when {
-        expression {
-          DEPLOY_TO == 'prod' || DEPLOY_TO == 'all'
-        }
-      }
       steps {
         script {
-          input message: "Promote application to Production ${params.BLUE_GREEN} environment!"
+          if (${DEPLOY_TO} == 'prod') {
+            input message: "Promote application to Production ${params.BLUE_GREEN} environment!"
+          }
         }
       }
     }
 
     stage('Promote to Prod') {
-      when {
-        expression {
-          DEPLOY_TO == 'prod' || DEPLOY_TO == 'all'
-        }
-      }
       steps {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              openshift.tag("${env.STAGE}/${params.APPLICATION_NAME}:latest", "${env.PROD}/${params.APPLICATION_NAME}-${params.BLUE_GREEN}:latest")
+              if (${DEPLOY_TO} == 'prod') {
+                openshift.tag("${env.STAGE}/${params.APPLICATION_NAME}:latest", "${env.PROD}/${params.APPLICATION_NAME}-${params.BLUE_GREEN}:latest")
+              } else {
+                echo "Skipping PROD environment deployment due to conditions!"
+              }
             }
           }
         }
