@@ -85,7 +85,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              if (${DEPLOY_TO} == 'dev' || ${DEPLOY_TO} == 'stage' || ${DEPLOY_TO} == 'prod') {
+              if (DEPLOY_TO == 'dev' || DEPLOY_TO == 'stage' || DEPLOY_TO == 'prod') {
                 echo "In DEV stage from== ${env.BUILD}/${params.APPLICATION_NAME}:latest"
                 echo "In DEV stage to== ${env.DEV}/${params.APPLICATION_NAME}:latest"
                 openshift.tag("${env.BUILD}/${params.APPLICATION_NAME}:latest", "${env.DEV}/${params.APPLICATION_NAME}:latest")
@@ -103,7 +103,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              if (${DEPLOY_TO} == 'stage' || ${DEPLOY_TO} == 'prod') {
+              if (DEPLOY_TO == 'stage' || DEPLOY_TO == 'prod') {
                 openshift.tag("${env.DEV}/${params.APPLICATION_NAME}:latest", "${env.STAGE}/${params.APPLICATION_NAME}:latest")
               } else {
                 echo "Skipping STAGE environment deployment due to conditions!"
@@ -117,7 +117,7 @@ pipeline {
     stage('Promotion gate') {
       steps {
         script {
-          if (${DEPLOY_TO} == 'prod') {
+          if (DEPLOY_TO == 'prod') {
             input message: "Promote application to Production ${params.BLUE_GREEN} environment!"
           }
         }
@@ -129,7 +129,7 @@ pipeline {
         script {
           openshift.withCluster() {
             openshift.withProject() {
-              if (${DEPLOY_TO} == 'prod') {
+              if (DEPLOY_TO == 'prod') {
                 openshift.tag("${env.STAGE}/${params.APPLICATION_NAME}:latest", "${env.PROD}/${params.APPLICATION_NAME}-${params.BLUE_GREEN}:latest")
               } else {
                 echo "Skipping PROD environment deployment due to conditions!"
