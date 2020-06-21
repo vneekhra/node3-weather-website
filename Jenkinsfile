@@ -1,6 +1,6 @@
 // Jenkinsfile for NodeJS App - CI/CD
 def templateName = 'weather-nodejs'
-def myEnvDeploy = 'dev'
+def DEPLOY_TO = 'dev'
 
 openshift.withCluster() {
   env.NAMESPACE = openshift.project()
@@ -16,7 +16,7 @@ openshift.withCluster() {
   echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
   echo "BLUE_GREEN: ${params.BLUE_GREEN}"
   echo "THIS WILL BE DEPLOYED IN PRODUCTION ${params.BLUE_GREEN} ENVIRONMENT"
-  echo "myEnvDeploy: ${myEnvDeploy}"
+  echo "DEPLOY_TO: ${DEPLOY_TO}"
 }
 
 pipeline {
@@ -32,7 +32,7 @@ pipeline {
                     openshift.withProject() {
                         echo "Using project: ${openshift.project()}"
                         echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
-                        myEnvDeploy = input(
+                        DEPLOY_TO = input(
                           message: 'Where to deploy?', 
                           parameters: [
                             [$class: 'ChoiceParameterDefinition', 
@@ -40,7 +40,7 @@ pipeline {
                             name: 'input', 
                             description: 'Select the environment where you want to deploy the application.']
                           ])
-                        echo "Deploy in ${myEnvDeploy}"
+                        echo "Deploy in ${DEPLOY_TO}"
                     }
                 }
             }
@@ -68,7 +68,7 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               timeout (time: 10, unit: 'MINUTES') {
-                echo "Deploy in ${myEnvDeploy}"
+                echo "Deploy in ${DEPLOY_TO}"
                 // run the build and wait for completion
                 def build = openshift.selector("bc", "${params.APPLICATION_NAME}").startBuild("--from-dir=.")
                                     
@@ -83,7 +83,7 @@ pipeline {
     stage('Promote to Dev') {
       when {
         expression {
-          ${myEnvDeploy} == 'dev' || ${myEnvDeploy} == 'all'
+          DEPLOY_TO == 'dev' || DEPLOY_TO == 'all'
         }
       }
       steps {
@@ -102,7 +102,7 @@ pipeline {
     stage('Promote to Stage') {
       when {
         expression {
-          ${myEnvDeploy} == 'stage' || ${myEnvDeploy} == 'all'
+          DEPLOY_TO == 'dev' || DEPLOY_TO == 'stage' || DEPLOY_TO == 'all'
         }
       }
       steps {
@@ -119,7 +119,7 @@ pipeline {
     stage('Promotion gate') {
       when {
         expression {
-          ${myEnvDeploy} == 'prod' || ${myEnvDeploy} == 'all'
+          DEPLOY_TO == 'prod' || DEPLOY_TO == 'all'
         }
       }
       steps {
@@ -132,7 +132,7 @@ pipeline {
     stage('Promote to Prod') {
       when {
         expression {
-          ${myEnvDeploy} == 'prod' || ${myEnvDeploy} == 'all'
+          DEPLOY_TO == 'prod' || DEPLOY_TO == 'all'
         }
       }
       steps {
