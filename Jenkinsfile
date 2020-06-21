@@ -16,7 +16,7 @@ openshift.withCluster() {
   echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
   echo "BLUE_GREEN: ${params.BLUE_GREEN}"
   echo "THIS WILL BE DEPLOYED IN PRODUCTION ${params.BLUE_GREEN} ENVIRONMENT"
-  echo "DEPLOY_TO: ${DEPLOY_TO}"
+  //echo "Default DEPLOY_TO: ${DEPLOY_TO}"
 }
 
 pipeline {
@@ -30,8 +30,8 @@ pipeline {
             script {
                 openshift.withCluster() {
                     openshift.withProject() {
-                        echo "Using project: ${openshift.project()}"
-                        echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
+                        //echo "Using project: ${openshift.project()}"
+                        //echo "APPLICATION_NAME: ${params.APPLICATION_NAME}"
                         DEPLOY_TO = input(
                           message: 'Where to deploy?', 
                           parameters: [
@@ -68,7 +68,7 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               timeout (time: 10, unit: 'MINUTES') {
-                echo "Deploy till ${DEPLOY_TO}"
+                echo "Deploy till ${DEPLOY_TO} environment!"
                 // run the build and wait for completion
                 def build = openshift.selector("bc", "${params.APPLICATION_NAME}").startBuild("--from-dir=.")
                                     
@@ -86,9 +86,10 @@ pipeline {
           openshift.withCluster() {
             openshift.withProject() {
               if (DEPLOY_TO == 'dev' || DEPLOY_TO == 'stage' || DEPLOY_TO == 'prod') {
-                echo "In DEV stage from== ${env.BUILD}/${params.APPLICATION_NAME}:latest"
-                echo "In DEV stage to== ${env.DEV}/${params.APPLICATION_NAME}:latest"
+                //echo "In DEV stage from== ${env.BUILD}/${params.APPLICATION_NAME}:latest"
+                //echo "In DEV stage to== ${env.DEV}/${params.APPLICATION_NAME}:latest"
                 openshift.tag("${env.BUILD}/${params.APPLICATION_NAME}:latest", "${env.DEV}/${params.APPLICATION_NAME}:latest")
+                echo "Deployed in DEV environment!"
               } else {
                 echo "Skipping DEV environment deployment due to conditions!"
               }
@@ -105,6 +106,7 @@ pipeline {
             openshift.withProject() {
               if (DEPLOY_TO == 'stage' || DEPLOY_TO == 'prod') {
                 openshift.tag("${env.DEV}/${params.APPLICATION_NAME}:latest", "${env.STAGE}/${params.APPLICATION_NAME}:latest")
+                echo "Deployed in STAGE environment!"
               } else {
                 echo "Skipping STAGE environment deployment due to conditions!"
               }
@@ -131,6 +133,7 @@ pipeline {
             openshift.withProject() {
               if (DEPLOY_TO == 'prod') {
                 openshift.tag("${env.STAGE}/${params.APPLICATION_NAME}:latest", "${env.PROD}/${params.APPLICATION_NAME}-${params.BLUE_GREEN}:latest")
+                echo "Deployed in PROD ${params.BLUE_GREEN} environment!"
               } else {
                 echo "Skipping PROD environment deployment due to conditions!"
               }
