@@ -1,4 +1,4 @@
-// Jenkinsfile for NodeJS App - CI/CD
+// Jenkinsfile for NodeJS App Blue Green Deployment in Prod environment - CI/CD
 def templateName = 'weather-nodejs'
 def DEPLOY_TO = 'dev'
 

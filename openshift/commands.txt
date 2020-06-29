@@ -10,22 +10,22 @@ oc policy add-role-to-user edit system:serviceaccount:vneekhra-nodejs-build:jenk
 
 oc create -f template-nodejs-deploy.yaml -n vneekhra-nodejs-dev
 oc create -f template-nodejs-deploy.yaml -n vneekhra-nodejs-stage
-oc create -f template-nodejs-deploy-prod.yaml -n vneekhra-nodejs-prod
+
 
 oc new-app weather-nodejs-deploy -p APPLICATION_NAME=weather-app -n vneekhra-nodejs-dev
 oc new-app weather-nodejs-deploy -p APPLICATION_NAME=weather-app -n vneekhra-nodejs-stage
+
+Below template is for Prod blue green deployment
+oc create -f template-nodejs-deploy-prod.yaml -n vneekhra-nodejs-prod
 oc new-app weather-nodejs-deploy-blue-green -p APPLICATION_NAME=weather-app -n vneekhra-nodejs-prod
 
-oc create -f template-nodejs-build.yaml -n vneekhra-nodejs-build
+Below template is for Prod deployment which is same as dev/stage, so either use these for Prod deployment or use above files for Prod blue green deployment.
+oc create -f template-nodejs-deploy.yaml -n vneekhra-nodejs-prod
+oc new-app weather-nodejs-deploy -p APPLICATION_NAME=weather-app -n vneekhra-nodejs-prod
 
+oc create -f template-nodejs-build.yaml -n vneekhra-nodejs-build
 oc new-app weather-nodejs-build -p APPLICATION_NAME=weather-app -p SOURCE_URL="https://github.com/vneekhra/node3-weather-website" -p SOURCE_REF="master" -n vneekhra-nodejs-build
 
-
-https://ibm-cloud-architecture.github.io/cloudpak-for-applications/liberty/liberty-deploy-43-jenkins/
-
-https://github.com/ibm-cloud-architecture/appmod-liberty-jenkins
-https://console-openshift-console.apps.rey.coc-ibm.com/k8s/ns/vneekhra-xcel-redhat-app/deploymentconfigs/covid-19/yaml
-https://cmc.coc-ibm.com:5000/cluster/rey
 
 
 vneekhra-nodejs-build
