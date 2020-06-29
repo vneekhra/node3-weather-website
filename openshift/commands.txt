@@ -27,7 +27,6 @@ oc create -f template-nodejs-build.yaml -n vneekhra-nodejs-build
 oc new-app weather-nodejs-build -p APPLICATION_NAME=weather-app -p SOURCE_URL="https://github.com/vneekhra/node3-weather-website" -p SOURCE_REF="master" -n vneekhra-nodejs-build
 
 
-
 vneekhra-nodejs-build
 oc get sa
 oc describe sa jenkins
