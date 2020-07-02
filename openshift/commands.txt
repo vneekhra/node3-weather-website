@@ -35,3 +35,4 @@ oc delete -f template-nodejs-deploy-prod.yaml -n vneekhra-nodejs-prod
 
 oc delete dc weather-app
 
+
