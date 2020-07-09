@@ -1,0 +1,36 @@
+
+1. Deploy A/B deployment, Jenkins pipeline using below files and commands.
+
+oc create -f projects.yaml
+
+oc project vneekhra-nodejs-build
+oc new-app jenkins-persistent
+
+oc policy add-role-to-user edit system:serviceaccount:vneekhra-nodejs-build:jenkins -n vneekhra-nodejs-dev
+oc policy add-role-to-user edit system:serviceaccount:vneekhra-nodejs-build:jenkins -n vneekhra-nodejs-stage
+oc policy add-role-to-user edit system:serviceaccount:vneekhra-nodejs-build:jenkins -n vneekhra-nodejs-prod
+
+oc create -f template-nodejs-deploy.yaml -n vneekhra-nodejs-dev
+oc create -f template-nodejs-deploy.yaml -n vneekhra-nodejs-stage
+
+
+oc new-app weather-nodejs-deploy -p APPLICATION_NAME=weather-app -n vneekhra-nodejs-dev
+oc new-app weather-nodejs-deploy -p APPLICATION_NAME=weather-app -n vneekhra-nodejs-stage
+
+Since we need A/B deployment only in Prod, hence use below prod template
+oc create -f template-nodejs-deploy-prod.yaml -n vneekhra-nodejs-prod
+oc new-app weather-nodejs-deploy-ab -p APPLICATION_NAME=weather-app -n vneekhra-nodejs-prod
+
+oc create -f template-nodejs-build.yaml -n vneekhra-nodejs-build
+oc new-app weather-nodejs-build -p APPLICATION_NAME=weather-app -p SOURCE_URL="https://github.com/vneekhra/node3-weather-website" -p SOURCE_REF="master" -n vneekhra-nodejs-build
+
+
+Below are few commands which you might need, if you need to clean up some components:
+oc get sa
+oc describe sa jenkins
+oc delete -f template-nodejs-build.yaml -n vneekhra-nodejs-build
+oc delete -f template-nodejs-deploy.yaml -n vneekhra-nodejs-dev
+oc delete -f template-nodejs-deploy.yaml -n vneekhra-nodejs-stage
+oc delete -f template-nodejs-deploy-prod.yaml -n vneekhra-nodejs-prod
+
+oc delete dc weather-app

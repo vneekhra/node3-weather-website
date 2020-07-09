@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: weather-nodejs-build
+metadata:
+  name: weather-nodejs-build
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      application: node-img
+    name: node-img
+  spec:
+    dockerImageRepostitory: ${NODE_IMAGE}:${NODE_VERSION}
+    lookupPolicy:
+      local: false
+    tags:
+      - annotations: null
+        name: latest
+        from:
+          kind: DockerImage
+          name: ${NODE_IMAGE}:${NODE_VERSION}
+      - annotations: null
+        name: ${NODE_VERSION}
+        from:
+          kind: DockerImage
+          name: ${NODE_IMAGE}:${NODE_VERSION}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${APPLICATION_NAME}:latest
+    source:
+      type: Binary
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: node-img:${NODE_VERSION}
+        dockerfilePath: Dockerfile
+        noCache: true
+        forcePull: true
+      type: Source
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}-pipeline
+  spec:
+    source:
+      git:
+        uri: ${SOURCE_URL}
+        ref: ${SOURCE_REF}
+    strategy:
+      jenkinsPipelineStrategy:
+        jenkinsfilePath: Jenkinsfile
+        env:
+          - name: APPLICATION_NAME
+            value: ${APPLICATION_NAME}
+          - name: AB_DEPLOY
+            value: a
+    triggers:
+    - github:
+        secret: "mysecret"
+      type: GitHub
+
+parameters:
+- description: The name for the application.
+  name: APPLICATION_NAME
+  required: true
+  value: tasks
+- description: Git source URI for application
+  name: SOURCE_URL
+  required: true
+  value: https://github.com/vneekhra/node3-weather-website
+- description: Git branch/tag reference
+  name: SOURCE_REF
+  value: master
+- description: Node Docker Image Name -
+  name: NODE_IMAGE
+  required: true
+  value: node
+- description: Node Docker Image Version -
+  name: NODE_VERSION
+  required: true
+  value: alpine

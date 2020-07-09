@@ -1,0 +1,172 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: weather-nodejs-deploy-ab
+metadata:
+  name: weather-nodejs-deploy-ab
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: The web server's http port.
+    labels:
+      application: ${APPLICATION_NAME}-ab
+    name: ${APPLICATION_NAME}-ab
+  spec:
+    ports:
+    - name: 8080-tcp
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+    selector:
+      abdeploy: 'true'
+- apiVersion: v1
+  kind: Route
+  id: ${APPLICATION_NAME}-http
+  metadata:
+    annotations:
+      description: Route for application's http service.
+    labels:
+      application: ${APPLICATION_NAME}
+    name: ${APPLICATION_NAME}
+  spec:
+    to:
+      name: ${APPLICATION_NAME}-ab
+    port:
+      targetPort: 8080-tcp
+    tls:
+      termination: edge
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}-a
+      abdeploy: 'true'
+    name: ${APPLICATION_NAME}-a
+  spec:
+    replicas: 1
+    selector:
+      abdeploy: 'true'
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          application: ${APPLICATION_NAME}-a
+          abdeploy: 'true'
+        name: ${APPLICATION_NAME}-a
+      spec:
+        containers:
+        - name: ${APPLICATION_NAME}-a
+          image: ${APPLICATION_NAME}-a
+          imagePullPolicy: Always
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 45
+            successThreshold: 1
+            timeoutSeconds: 1
+            failureThreshold: 3
+          ports:
+          - containerPort: 8080
+            name: 8080-tcp
+            protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+            failureThreshold: 3
+          terminationGracePeriodSeconds: 60
+          dnsPolicy: ClusterFirst
+          securityContext: {}
+    triggers:
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+          - ${APPLICATION_NAME}-a
+          from:
+            kind: ImageStream
+            name: ${APPLICATION_NAME}-a
+      - type: ConfigChange
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    labels:
+      application: ${APPLICATION_NAME}-a
+      abdeploy: 'true'
+    name: ${APPLICATION_NAME}-b
+  spec:
+    replicas: 1
+    selector:
+      abdeploy: 'true'
+    strategy:
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          application: ${APPLICATION_NAME}-b
+          abdeploy: 'true'
+        name: ${APPLICATION_NAME}-b
+      spec:
+        containers:
+        - name: ${APPLICATION_NAME}-b
+          image: ${APPLICATION_NAME}-b
+          imagePullPolicy: Always
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 45
+            successThreshold: 1
+            timeoutSeconds: 1
+            failureThreshold: 3
+          ports:
+          - containerPort: 8080
+            name: 8080-tcp
+            protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+            failureThreshold: 3
+          terminationGracePeriodSeconds: 60
+          dnsPolicy: ClusterFirst
+          securityContext: {}
+    triggers:
+      - type: ImageChange
+        imageChangeParams:
+          automatic: true
+          containerNames:
+          - ${APPLICATION_NAME}-b
+          from:
+            kind: ImageStream
+            name: ${APPLICATION_NAME}-b     
+      - type: ConfigChange
+parameters:
+- description: The name for the application.
+  name: APPLICATION_NAME
+  required: true
+  value: tasks
