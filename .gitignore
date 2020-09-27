@@ -1,3 +1,4 @@
 node_modules/
 openshift/urls.txt
 openshift/rough
+.DS_Store
