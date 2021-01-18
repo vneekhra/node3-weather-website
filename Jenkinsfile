@@ -41,8 +41,8 @@ pipeline {
     // Build Application using npm
     stage('Building application') {
       steps {
-        //sh "npm install"
         echo "In build stage @@@@@@@@@@@@@@"
+        sh "npm install"
         sh 'node --version'
       }
     }
