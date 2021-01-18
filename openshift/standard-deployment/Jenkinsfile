@@ -1,4 +1,4 @@
-// Jenkinsfile for NodeJS App - CI/CD
+// Jenkinsfile for NodeJS App Standard deployment - CI/CD
 def templateName = 'weather-nodejs'
 
 openshift.withCluster() {
