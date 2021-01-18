@@ -21,8 +21,8 @@ pipeline {
   //tools {nodejs "nodejs"}
 
   agent {
-    label 'mydocker'
     dockerfile true
+    label 'mydocker'
   }
 
 
