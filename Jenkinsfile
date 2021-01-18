@@ -16,13 +16,13 @@ openshift.withCluster() {
 }
 
 pipeline {
-  //agent any
+  agent any
 
-  //tools {nodejs "nodejs"}
+  tools {nodejs "nodejs"}
 
-  agent {
-    dockerfile true
-  }
+  //agent {
+    //dockerfile true
+  //}
 
 
   stages {
