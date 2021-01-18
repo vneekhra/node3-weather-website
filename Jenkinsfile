@@ -20,7 +20,10 @@ pipeline {
 
   //tools {nodejs "nodejs"}
 
-  agent { dockerfile true }
+  agent {
+    label 'mydocker'
+    dockerfile true
+  }
 
 
   stages {
