@@ -16,9 +16,12 @@ openshift.withCluster() {
 }
 
 pipeline {
-  agent any
+  //agent any
 
-  tools {nodejs "nodejs"}
+  //tools {nodejs "nodejs"}
+
+  agent { dockerfile true }
+
 
   stages {
     stage('preamble') {
@@ -36,7 +39,9 @@ pipeline {
     // Build Application using npm
     stage('Building application') {
       steps {
-        sh "npm install"
+        //sh "npm install"
+        echo "In build stage @@@@@@@@@@@@@@"
+        sh 'node --version'
       }
     }
       
