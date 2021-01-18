@@ -22,7 +22,6 @@ pipeline {
 
   agent {
     dockerfile true
-    label 'mydocker'
   }
 
 
