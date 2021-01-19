@@ -33,3 +33,9 @@ oc delete -f template-nodejs-deploy.yaml -n vneekhra-nodejs-stage
 oc delete -f template-nodejs-deploy-prod.yaml -n vneekhra-nodejs-prod
 
 oc delete dc weather-app
+
+
+Installation Instructions:
+
+1. Since we are using tools {nodejs "nodejs"} in jenkins file, so install nodejs plugin in Jenkins > Manage Jenkins > Manage Plugins
+2. Then add nodejs plugin inside Global tools configuration which is inside Manage Jenkins, and give name as nodejs.
